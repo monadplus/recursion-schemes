@@ -1,0 +1,2 @@
+resolver: lts-16.25 # ghc8.8.4
+extra-deps: []

@@ -1,0 +1,16 @@
+# cradle:
+#     stack:
+#         - path: "./src"
+#           component: "recursion:lib"
+#         - path: "./app"
+#           component: "recursion:exe:recursion"
+#         - path: "./test"
+#           component: "recursion:test:recursion-tests"
+cradle:
+    cabal:
+        - path: "./src"
+          component: "lib:recursion"
+        - path: "./app"
+          component: "exe:recursion"
+        - path: "./test"
+          component: "test:recursion-tests"
