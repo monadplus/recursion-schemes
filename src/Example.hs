@@ -93,6 +93,10 @@ filter p = cata go
       | p a = a : as
       | otherwise = as
 
+-- |
+-- >>> :m +Data.Tree
+-- >>> let tree = Node 0 [Node 1 [], Node 2 [Node 4 [], Node 5 []], Node 3 [Node 6 []]]
+-- >>> putStrLn $ pprint tree
 pprint :: Tree Int -> String
 pprint = flip runReader 0 . cataA go
   where
