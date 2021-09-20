@@ -1,5 +1,5 @@
 /*
-nix-build -A recursion-schemes.components.library
+nix-build -A recursion.components.library
 
 nix-build -A projectCross.ghcjs.hsPkgs.recursion-schemes.components.exes.your-exe-name
 nix-build -A projectCross.mingwW64.hsPkgs.recursion-schemes.components.exes.your-exe-name
@@ -14,12 +14,10 @@ let
     haskellNix.sources.nixpkgs-2009
     haskellNix.nixpkgsArgs;
 
-in pkgs.haskell-nix.project {
+in pkgs.haskell-nix.cabalProject {
   src = pkgs.haskell-nix.haskellLib.cleanGit {
-    name = "haskell-nix-project";
+    name = "recursion";
     src = ./.;
   };
-
-  # Not required for `stack.yaml` based projects.
   compiler-nix-name = "ghc8107";
 }
