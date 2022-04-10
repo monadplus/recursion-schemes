@@ -13,6 +13,7 @@ Executable recursion
   main-is:               Main.hs
   hs-source-dirs:        app
   ghc-options:           -O2 -threaded -rtsopts -with-rtsopts=-N
+  build-depends:         recursion
 
 Library
   import:             common-options

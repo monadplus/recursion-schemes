@@ -231,6 +231,7 @@ repeat2 a = apo go
 data BinTreeF a b = Tip | Branch b a b
   deriving (Functor)
 
+-- |
 -- >>> quicksort [5,4,3,2,1]
 quicksort :: Ord a => [a] -> [a]
 quicksort = hylo merge split
@@ -246,20 +247,28 @@ quicksort = hylo merge split
 data BinTreeF' a b = Tip' a | Branch' b b
   deriving (Functor)
 
+-- |
+-- >>> mergesort [1,2,3,4,5]
+-- [1,2,3,4,5]
+-- >>> mergesort [5,4,3,2,1]
+-- [1,2,3,4,5]
+-- >>> mergesort [1,4,2,5,3]
+-- [1,2,3,4,5]
 mergesort :: Ord a => [a] -> [a]
-mergesort = hylo merge split
+mergesort = \case
+  [] -> []
+  xs -> hylo merge split xs
   where
     split [x] = Tip' x
     split xs =
       let (l, r) = splitAt (length xs `div` 2) xs
        in Branch' l r
 
-    merge (Tip' a) = [a]
+    merge (Tip' x) = [x]
     merge (Branch' xs ys) = merge' xs ys
-
-    -- TODO
-    merge' xs [] = xs
-    merge' [] ys = ys
-    merge' (x : xs) (y : ys)
-      | x < y = x : merge' xs (y : ys)
-      | otherwise = y : merge' (x : xs) ys
+      where
+        merge' xs [] = xs
+        merge' [] ys = ys
+        merge' (x : xs) (y : ys)
+          | x < y = x : merge' xs (y : ys)
+          | otherwise = y : merge' (x : xs) ys
