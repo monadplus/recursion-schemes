@@ -71,6 +71,7 @@ import Data.Functor.Foldable.TH
 
 data List a = Nil | Cons a (List a)
   deriving (Functor)
+
 -- makeBaseFunctor ''List
 
 data ListF a b = NilF | ConsF a b

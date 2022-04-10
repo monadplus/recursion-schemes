@@ -65,8 +65,8 @@ import Control.Monad.Reader
 import Data.Functor.Base (TreeF (..))
 import Data.Functor.Foldable
 import Data.Functor.Foldable.TH
-import Data.Tree
 import Data.List
+import Data.Tree
 
 --------------------------------------------------
 -- Cata (fold)
@@ -79,8 +79,8 @@ import Data.List
 
 -- (f a -> a) is called an f-algebra
 
-sum :: [Int] -> Int
-sum = cata go
+sum' :: [Int] -> Int
+sum' = cata go
   where
     go Nil = 0
     go (Cons a !r) = a + r
@@ -97,6 +97,13 @@ filter p = cata go
 -- >>> :m +Data.Tree
 -- >>> let tree = Node 0 [Node 1 [], Node 2 [Node 4 [], Node 5 []], Node 3 [Node 6 []]]
 -- >>> putStrLn $ pprint tree
+-- * 0
+--   * 1
+--   * 2
+--     * 4
+--     * 5
+--   * 3
+--     * 6
 pprint :: Tree Int -> String
 pprint = flip runReader 0 . cataA go
   where
@@ -104,19 +111,54 @@ pprint = flip runReader 0 . cataA go
       TreeF Int (Reader Int String) ->
       Reader Int String
     go (NodeF i rss) = do
-      -- rss :: [Reader Int String]
-      -- ss  :: [String]
+      indent <- ask -- 1* Order does not matter thanks to `local`
       ss <- local (+ 2) $ sequence rss
-      indent <- ask
+      -- 1* indent <- ask
       let s = replicate indent ' ' ++ "* " ++ show i
       pure $ intercalate "\n" (s : ss)
 
 -- para :: Recursive t => (Base t (t, a) -> a) -> t -> a
+
+-- |
+-- >>> :m +Data.Tree
+-- >>> let tree = Node 0 [Node 1 [], Node 2 [Node 4 [], Node 5 []], Node 3 [Node 6 []]]
+-- >>> putStrLn $ pprint2 tree
+-- * 0 (6)
+--   * 1 (0)
+--   * 2 (2)
+--     * 4 (0)
+--     * 5 (0)
+--   * 3 (1)
+--     * 6 (0)
+pprint2 :: Tree Int -> String
+pprint2 = flip runReader 0 . para go
+  where
+    go ::
+      TreeF Int (Tree Int, Reader Int String) ->
+      Reader Int String
+    go (NodeF i trss) = do
+      let (ts, rss) = unzip trss
+      let count = sum $ fmap length ts
+      ss <- local (+ 2) $ sequence rss
+      indent <- ask
+      let s =
+            replicate indent ' '
+              ++ "* "
+              ++ show i
+              ++ " ("
+              ++ show count
+              ++ ")"
+      pure $ intercalate "\n" (s : ss)
+
 -- histo :: Recursive t => (Base t (Cofree (Base t) a) -> a) -> t -> a
+-- Example: https://hackage.haskell.org/package/recursion-schemes-5.2.2.2/docs/Data-Functor-Foldable.html#v:histo
+
+-- zygo :: Recursive t => (Base t b -> b) -> (Base t (b, a) -> a) -> t -> a
 
 --------------------------------------------------
 -- Ana (unfold)
 
+-- ana :: Corecursive t => (a -> Base t a) -> a -> t
 -- ana g = a where a = embed . fmap a . g
 
 -- ana :: Functor f => (a -> f a) -> a -> Fix f
@@ -124,11 +166,51 @@ pprint = flip runReader 0 . cataA go
 
 -- (a -> f a) is called an f-coalgebra
 
+-- |
+-- >>> let tree = Example.repeat 0 3
+-- >>> putStrLn $ pprint2 tree
+-- * 1 (7)
+--   * 1 (3)
+--     * 1 (1)
+--       * 1 (0)
+--     * 1 (0)
+--   * 1 (1)
+--     * 1 (0)
+--   * 1 (0)
 repeat :: a -> Int -> Tree a
 repeat a = ana go
   where
     go 0 = NodeF a []
-    go n = NodeF a [n-1..0]
+    go n = NodeF a [n -1, n -2 .. 0]
+
+-- apo :: Corecursive t => (a -> Base t (Either t a)) -> a -> t
+
+-- |
+-- >>> let tree = Example.repeat2 0 2
+-- >>> putStrLn $ pprint2 tree
+-- * 0 (13)
+--   * 0 (0)
+--   * 0 (4)
+--     * 0 (0)
+--     * 0 (1)
+--       * 0 (0)
+--     * 0 (0)
+--   * 0 (3)
+--     * 0 (1)
+--       * 0 (0)
+--     * 0 (0)
+--   * 0 (1)
+--     * 0 (0)
+--   * 0 (0)
+repeat2 :: a -> Int -> Tree a
+repeat2 a = apo go
+  where
+    go 0 = NodeF a []
+    go n
+      | odd n = NodeF a (Left (Node a []) : fmap Right [n -2, n -3 .. 0])
+      | otherwise = NodeF a (fmap Right [n -1, n -2 .. 0])
+
+-- futu :: Corecursive t => (a -> Base t (Free (Base t) a)) -> a -> t
 
 ---------------------------------------------------
 -- Hylo (fold . unfold)
@@ -151,31 +233,33 @@ data BinTreeF a b = Tip | Branch b a b
 
 -- >>> quicksort [5,4,3,2,1]
 quicksort :: Ord a => [a] -> [a]
-quicksort = hylo merge split where
-  split [] = Tip
-  split (x:xs) =
-    let (l, r) = partition (< x) xs
-     in Branch l x r
+quicksort = hylo merge split
+  where
+    split [] = Tip
+    split (x : xs) =
+      let (l, r) = partition (< x) xs
+       in Branch l x r
 
-  merge Tip = []
-  merge (Branch l x r) = l ++ [x] ++ r
+    merge Tip = []
+    merge (Branch l x r) = l ++ [x] ++ r
 
 data BinTreeF' a b = Tip' a | Branch' b b
   deriving (Functor)
 
 mergesort :: Ord a => [a] -> [a]
-mergesort = hylo merge split where
-  split [x] = Tip' x
-  split xs =
-    let (l, r) = splitAt (length xs `div` 2) xs
-     in Branch' l r
+mergesort = hylo merge split
+  where
+    split [x] = Tip' x
+    split xs =
+      let (l, r) = splitAt (length xs `div` 2) xs
+       in Branch' l r
 
-  merge (Tip' a) = [a]
-  merge (Branch' xs ys) = merge' xs ys
+    merge (Tip' a) = [a]
+    merge (Branch' xs ys) = merge' xs ys
 
-  -- TODO
-  merge' xs [] = xs
-  merge' [] ys = ys
-  merge' (x:xs) (y:ys)
-    | x < y = x : merge' xs (y:ys)
-    | otherwise = y : merge' (x:xs) ys
+    -- TODO
+    merge' xs [] = xs
+    merge' [] ys = ys
+    merge' (x : xs) (y : ys)
+      | x < y = x : merge' xs (y : ys)
+      | otherwise = y : merge' (x : xs) ys
