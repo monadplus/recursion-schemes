@@ -18,9 +18,38 @@ Executable recursion
 Library
   import:             common-options
   hs-source-dirs:     src
-  exposed-modules:    Example,
+  exposed-modules:
+                      -- Recursion schemes
+                      Example
                       ListF
+
+                      -- Comonad
+                      Comonad.Cofree
+                        Comonad.Cofree.Examples
+                        Comonad.Cofree.Newton
+                        Comonad.Cofree.Trans
+                      Comonad.Env
+                        Comonad.Env.Account
+                        Comonad.Env.Formatter
+                      Comonad.Fix.WFix
+                      Comonad.Store
+                        Comonad.Store.Convolution
+                        Comonad.Store.Conway
+                        Comonad.Store.Dependencies
+                      Comonad.Stream
+                      Comonad.Traced
+                        Comonad.Traced.Builder
+                        Comonad.Traced.Dependencies
+                        Comonad.Traced.Derivative
+                      Comonad.Transformers.Report
+                      Comonad.Transformers.ReportAdvanced
+                      Comonad.Tree
+                      Comonad.Zipper
+                        Comonad.Zipper.WaterLevel
   other-modules:
-  build-depends:      recursion-schemes ^>= 5.2,
+  build-depends:      comonad ^>= 5.0,
                       containers ^>= 0.6,
+                      directory ^>= 1.3,
+                      free >= 5.1,
                       mtl ^>= 2.2,
+                      recursion-schemes ^>= 5.2
