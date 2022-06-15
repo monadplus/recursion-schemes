@@ -12,7 +12,7 @@ import Control.Comonad
 data Cofree f a = a :< f (Cofree f a)
   deriving (Functor, Foldable)
 
-deriving instance Show a => (forall x. Show x => (Show (f x))) => Show (Cofree f a)
+deriving instance (Show a, forall x. Show x => Show (f x)) => Show (Cofree f a)
 
 instance (Functor f) => Comonad (Cofree f) where
   extract :: Cofree f a -> a

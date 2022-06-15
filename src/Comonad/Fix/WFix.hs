@@ -9,12 +9,13 @@ import Data.Monoid
 -- >>> peek 3 factorialStore
 -- 6
 factorialStore :: Store Int Int
-factorialStore = extend wfix (store go 0)
+-- wfix :: w (w a -> a) -> a
+-- store go 0 :: Store Int (Store Int Int -> Int) -- Builds a store (s -> a) s where s ~ itself.
+-- wfix (store go 0) :: Int
+-- But we want to apply it to all elements in the store so we use `extend`.
+-- extend wfix :: w (w b -> b) -> w b
+factorialStore = extend wfix $ store go 0
   where
-    -- extend Comonad w => (w a -> b) -> w a -> w b
-    -- wfix :: Comonad w => w (w a -> a) -> a
-    -- store go 0 :: Store Int (Store Int Int -> Int)
-
     go :: Int -> (Store Int Int -> Int)
     go 0 _ = 1
     go n w = n * peeks (subtract 1) w
